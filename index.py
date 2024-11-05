@@ -4,6 +4,12 @@ dataset.fillna(dataset.mean(),inplace=True)
 input_data = dataset[['steps','distance_km','workout_type','sleep_hours','weather_conditions','active_minutes']]
 output_data = dataset[['calories_burned','mood']]
 
+from sklearn.preprocessing import LabelEncoder
+label_encoder_workout = LabelEncoder()
+label_encoder_weather = LabelEncoder()
+dataset['workout_type'] = label_encoder_workout.fit_transform(dataset['workout_type'])
+dataset['weather_conditions'] = label_encoder_workout.fit_transform(dataset['weather_conditions'])
+
 from sklearn.preprocessing import MinMaxScaler
 scaler=MinMaxScaler()
 input_data_scaled=scaler.fit_transform(input_data)
@@ -44,10 +50,10 @@ model.add(Dropout(0.5))
 
 model.save('fitness_tracker_ann.h5')
 
-from fastapi import FastAPI, Request # type: ignore
+from fastapi import FastAPI, Request
 from tensorflow.keras.models import load_model #type:ignore
 import numpy as np
-from pydantic import BaseModel # type: ignore
+from pydantic import BaseModel
 
 model = load_model('fitness_tracker_ann.h5')
 app = FastAPI()
@@ -62,7 +68,11 @@ class InputData(BaseModel):
 
 @app.post("/predict")
 async def predict(data:InputData):
+    workout_type_encoded = label_encoder_workout.transform([data.workout_type])[0]
+    weather_conditions_encoded = label_encoder_weather.transform([data.weather_conditions])[0]
+
     i_data = np.array([[data.steps,data.distance_km,data.workout_type,data.sleep_hours,data.weather_conditions,data.active_minutes]])
+    i_data_scaled = scaler.transform(i_data)
 
     predicton = model.predict(i_data)
-    return{"calories_burned":predicton[0][0],"mood":[0][1]}
+    return{"calories_burned":predicton[0][0],"mood":predicton[0][1]}
