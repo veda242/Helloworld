@@ -44,10 +44,10 @@ model.add(Dropout(0.5))
 
 model.save('fitness_tracker_ann.h5')
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request # type: ignore
 from tensorflow.keras.models import load_model #type:ignore
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel # type: ignore
 
 model = load_model('fitness_tracker_ann.h5')
 app = FastAPI()
